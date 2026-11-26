@@ -1,7 +1,6 @@
-
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Send } from 'lucide-react';
 
 import DashboardLayout from '../components/DashboardLayout';
 import { getUser } from '../data';
@@ -12,26 +11,51 @@ export default function ManageArticles() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(null);
+  const [publishing, setPublishing] = useState(null);
 
   const user = getUser();
 
+  const loadArticles = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const data = await apiRequest('/articles/manage');
+      setItems(data.articles || []);
+    } catch (err) {
+      setError(err.message || 'Unable to load articles.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadArticles = async () => {
-      try {
-        setLoading(true);
-        setError('');
-
-        const data = await apiRequest('/articles/manage');
-        setItems(data.articles || []);
-      } catch (err) {
-        setError(err.message || 'Unable to load articles.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadArticles();
   }, []);
+
+  const publishArticle = async (id) => {
+    try {
+      setPublishing(id);
+      setError('');
+
+      await apiRequest(`/articles/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: 'published' })
+      });
+
+      setItems((previous) =>
+        previous.map((article) =>
+          article._id === id
+            ? { ...article, status: 'published' }
+            : article
+        )
+      );
+    } catch (err) {
+      setError(err.message || 'Unable to publish article.');
+    } finally {
+      setPublishing(null);
+    }
+  };
 
   const remove = async (id) => {
     const confirmDelete = window.confirm(
@@ -42,6 +66,7 @@ export default function ManageArticles() {
 
     try {
       setDeleting(id);
+      setError('');
 
       await apiRequest(`/articles/${id}`, {
         method: 'DELETE'
@@ -74,12 +99,10 @@ export default function ManageArticles() {
           <p className="eyebrow">CONTENT LIBRARY</p>
 
           <h1>
-            {user?.role === 'admin'
-              ? 'Manage Articles'
-              : 'My Articles'}
+            {user?.role === 'admin' ? 'Manage Articles' : 'My Articles'}
           </h1>
 
-          <p>Organise, edit and publish your stories.</p>
+          <p>Organise and publish your stories.</p>
         </div>
 
         <Link className="btn-primary" to="/create">
@@ -123,10 +146,7 @@ export default function ManageArticles() {
                     <td>
                       <div className="table-story">
                         {article.coverImage && (
-                          <img
-                            src={article.coverImage}
-                            alt=""
-                          />
+                          <img src={article.coverImage} alt="" />
                         )}
                         <b>{article.title}</b>
                       </div>
@@ -137,9 +157,7 @@ export default function ManageArticles() {
                     )}
 
                     <td>{article.category}</td>
-
                     <td>{formatDate(article.createdAt)}</td>
-
                     <td>{article.views || 0}</td>
 
                     <td>
@@ -149,15 +167,29 @@ export default function ManageArticles() {
                     </td>
 
                     <td>
-                      <button
-                        className="table-icon"
-                        onClick={() => remove(article._id)}
-                        disabled={deleting === article._id}
-                        aria-label="Delete article"
-                        title="Delete article"
-                      >
-                        <Trash2 size={16} />
-                      </button>
+                      <div className="d-flex align-items-center gap-2">
+                        {article.status !== 'published' && (
+                          <button
+                            className="table-icon"
+                            onClick={() => publishArticle(article._id)}
+                            disabled={publishing === article._id}
+                            title="Publish article"
+                            aria-label="Publish article"
+                          >
+                            <Send size={16} />
+                          </button>
+                        )}
+
+                        <button
+                          className="table-icon"
+                          onClick={() => remove(article._id)}
+                          disabled={deleting === article._id}
+                          title="Delete article"
+                          aria-label="Delete article"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
