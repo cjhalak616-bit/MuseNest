@@ -1,10 +1,8 @@
-
 import { useEffect, useState } from 'react';
 import {
   FileText,
   Eye,
   MessageCircle,
-  Users,
   Plus,
   ArrowUpRight,
   Bookmark
@@ -31,7 +29,6 @@ export default function Dashboard() {
         setError('');
 
         const articleResult = await apiRequest('/articles');
-
         setArticles(articleResult.articles || []);
 
         if (user.role === 'admin' || user.role === 'author') {
@@ -87,12 +84,8 @@ export default function Dashboard() {
         )
       : articles;
 
-  const recentArticles =
-    user.role === 'user'
-      ? bookmarks
-      : visibleArticles;
-
-  const displayArticles = recentArticles.slice(0, 4);
+  // User dashboard par bookmarks ke bajaye articles explore honge.
+  const displayArticles = visibleArticles.slice(0, 4);
 
   const totalArticles = stats.totalArticles ?? stats.total ?? 0;
   const publishedArticles = stats.publishedArticles ?? stats.published ?? 0;
@@ -125,9 +118,7 @@ export default function Dashboard() {
     <DashboardLayout>
       <div className="dash-heading">
         <div>
-          <p className="eyebrow">
-            {user.role.toUpperCase()} WORKSPACE
-          </p>
+          <p className="eyebrow">{user.role.toUpperCase()} WORKSPACE</p>
 
           <h1>
             {user.role === 'admin'
@@ -142,9 +133,13 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {(user.role === 'admin' || user.role === 'author') && (
+        {user.role === 'admin' || user.role === 'author' ? (
           <Link className="btn-primary" to="/create">
             <Plus size={16} /> Add Article
+          </Link>
+        ) : (
+          <Link className="btn-primary" to="/articles">
+            Explore Articles <ArrowUpRight size={16} />
           </Link>
         )}
       </div>
@@ -174,16 +169,14 @@ export default function Dashboard() {
                   <p className="eyebrow">FRESH FROM THE NEST</p>
                   <h2>
                     {user.role === 'user'
-                      ? 'Your Bookmarks'
+                      ? 'Explore Articles'
                       : 'Recent Articles'}
                   </h2>
                 </div>
 
-                {(user.role === 'admin' || user.role === 'author') && (
-                  <Link to="/articles">
-                    View all <ArrowUpRight size={15} />
-                  </Link>
-                )}
+                <Link to="/articles">
+                  View all <ArrowUpRight size={15} />
+                </Link>
               </div>
 
               <div className="dash-article-list">
@@ -193,10 +186,12 @@ export default function Dashboard() {
                       className="dash-article"
                       key={getArticleId(article)}
                     >
-                      <img
-                        src={getArticleImage(article)}
-                        alt={article.title}
-                      />
+                      {getArticleImage(article) && (
+                        <img
+                          src={getArticleImage(article)}
+                          alt={article.title}
+                        />
+                      )}
 
                       <div>
                         <b>{article.title}</b>
@@ -212,9 +207,7 @@ export default function Dashboard() {
                   ))
                 ) : (
                   <p className="muted">
-                    {user.role === 'user'
-                      ? 'You have not bookmarked any articles yet.'
-                      : 'No published articles available yet.'}
+                    No published articles available yet.
                   </p>
                 )}
               </div>
@@ -228,9 +221,7 @@ export default function Dashboard() {
                   <br />
                   Exploring.
                 </h2>
-                <p>
-                  Every idea can become a beautiful story.
-                </p>
+                <p>Every idea can become a beautiful story.</p>
               </div>
 
               <div className="dash-flower">✿</div>
