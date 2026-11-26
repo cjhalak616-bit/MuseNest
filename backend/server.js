@@ -17,7 +17,9 @@ const app = express();
 
 // MIDDLEWARE
 app.use(cors({
-  origin: 'http://localhost:5173'
+  origin: ['http://localhost:5173',
+    'https://muse-nest-cms.vercel.app'
+  ]
 }));
 
 app.use(express.json());
