@@ -1,5 +1,5 @@
 
-const API_URL = 'https://musenest-api.onrender.com';
+const API_URL = 'https://musenest-api.onrender.com/api';
 
 export const getToken = () => {
   return localStorage.getItem('museNestToken');
